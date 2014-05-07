@@ -1,25 +1,27 @@
 import wx
+from autoid import AutoId
 from mail_ico import getIcon
 
 ########################################################################
 class MailIcon(wx.TaskBarIcon):
-    TBMENU_RESTORE = wx.NewId()
-    TBMENU_CLOSE   = wx.NewId()
-    TBMENU_CHANGE  = wx.NewId()
-    TBMENU_REMOVE  = wx.NewId()
+    #TBMENU_RESTORE = wx.NewId()
+    #TBMENU_CLOSE   = wx.NewId()
+    #TBMENU_CHANGE  = wx.NewId()
+    #TBMENU_REMOVE  = wx.NewId()
+    
     
     #----------------------------------------------------------------------
     def __init__(self, frame):
         wx.TaskBarIcon.__init__(self)
         self.frame = frame
-        
+        self.id = AutoId()
         # Set the image
         self.tbIcon = getIcon()
                    
         self.SetIcon(self.tbIcon, "george Test")
         
         # bind some evts
-        self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
+        self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.id.TBMENU_CLOSE)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarLeftClick)
         
     #----------------------------------------------------------------------
@@ -31,10 +33,13 @@ class MailIcon(wx.TaskBarIcon):
         the base class takes care of the rest.
         """
         menu = wx.Menu()
-        menu.Append(self.TBMENU_RESTORE, "Open Program")
-        menu.Append(self.TBMENU_CHANGE, "Show all the Items")
+        menu.Append(self.id.TBMENU_RESTORE, "Open Program")
+        menu.Append(self.id.TBMENU_CHANGE, "Show all the Items")
+        sub_menu = wx.Menu()
+        sub_menu.Append(self.id.SUBMENU_BETTER,"50%")
+        menu.AppendSubMenu(sub_menu,"Device1")
         menu.AppendSeparator()
-        menu.Append(self.TBMENU_CLOSE,   "Exit Program")
+        menu.Append(self.id.TBMENU_CLOSE,   "Exit Program")
         return menu
         
     #----------------------------------------------------------------------
@@ -66,6 +71,7 @@ class MyForm(wx.Frame):
         wx.Frame.__init__(self, None, wx.ID_ANY, "Tutorial", size=(500,500))
         panel = wx.Panel(self)
         self.tbIcon = MailIcon(self)
+        self.tbIcon.ShowBalloon("Test","Test",5,wx.ICON_WARNING);
         self.Bind(wx.EVT_CLOSE, self.onClose)
         
     #----------------------------------------------------------------------
