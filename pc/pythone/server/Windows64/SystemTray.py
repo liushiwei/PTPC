@@ -12,7 +12,7 @@ class SystemTray(wx.TaskBarIcon):
     #TBMENU_CLOSE   = wx.NewId()
     #TBMENU_CHANGE  = wx.NewId()
     #TBMENU_REMOVE  = wx.NewId()
-    
+    ANDROID = 0;
     
     #----------------------------------------------------------------------
     def __init__(self, frame):
@@ -49,13 +49,14 @@ class SystemTray(wx.TaskBarIcon):
         menu.Append(self.id.TBMENU_CLOSE,   "Exit Program")
         return menu
         
+    def addDevice(self,name,type=ANDROID):
+        return
     #----------------------------------------------------------------------
     def OnTaskBarActivate(self, evt):
         """"""
         pass
      #----------------------------------------------------------------------
-    def OnChangeIcon(self, evt):
-        self.icons = itertools.cycle(glob.glob('../*.ico'))  
+    def OnChangeIcon(self, evt):  
         self.tbIcon = Icon(self.icons.next())
         self.SetIcon(self.tbIcon, "Icon changed")
         self.ShowBalloon("Test","Icon changed",5,wx.ICON_WARNING);
