@@ -4,7 +4,8 @@ import wx
 from wx import Icon
 from autoid import AutoId
 import itertools, glob  
-     
+from Device import Device
+
    
 ########################################################################
 class SystemTray(wx.TaskBarIcon):
@@ -13,6 +14,8 @@ class SystemTray(wx.TaskBarIcon):
     #TBMENU_CHANGE  = wx.NewId()
     #TBMENU_REMOVE  = wx.NewId()
     ANDROID = 0;
+    
+    devices = []
     
     #----------------------------------------------------------------------
     def __init__(self, frame):
@@ -28,6 +31,8 @@ class SystemTray(wx.TaskBarIcon):
         # bind some evts
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.id.TBMENU_CLOSE)
         self.Bind(wx.EVT_MENU, self.OnChangeIcon, id=self.id.SUBMENU_CHANGE_ICON)
+        self.Bind(wx.EVT_MENU, self.OnShowFrame, id=self.id.TBMENU_RESTORE)
+        self.Bind(wx.EVT_MENU, self.OnBatteryChange, id=self.id.SUBMENU_CHANGE_BATTERY)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.OnTaskBarLeftClick)
         
     #----------------------------------------------------------------------
@@ -41,15 +46,20 @@ class SystemTray(wx.TaskBarIcon):
         menu = wx.Menu()
         menu.Append(self.id.TBMENU_RESTORE, "Open Program")
         menu.Append(self.id.TBMENU_CHANGE, "Show all the Items")
-        sub_menu = wx.Menu()
-        sub_menu.Append(self.id.SUBMENU_BETTER,"50%")
-        sub_menu.Append(self.id.SUBMENU_CHANGE_ICON,"Change Icon")
-        menu.AppendSubMenu(sub_menu,"Device1")
+        for device in self.devices:
+            print("device better",device.Name)
+            sub_menu = wx.Menu()
+            sub_menu.Append(self.id.SUBMENU_BATTER,"Battery: "+str(device.Battery)+"%")
+            #sub_menu.Append(self.id.SUBMENU_CHANGE_ICON,"Change Icon")
+            sub_menu.Append(self.id.SUBMENU_MESSAGE,"Message: "+str(device.UnReadMessages))
+            sub_menu.Append(self.id.SUBMENU_PHONECALL,"Missed Call: "+str(device.PhoneCall))
+            menu.AppendSubMenu(sub_menu,device.Name)
         menu.AppendSeparator()
         menu.Append(self.id.TBMENU_CLOSE,   "Exit Program")
         return menu
         
-    def addDevice(self,name,type=ANDROID):
+    def addDevice(self,device):
+        self.devices.append(device)
         return
     #----------------------------------------------------------------------
     def OnTaskBarActivate(self, evt):
@@ -72,18 +82,37 @@ class SystemTray(wx.TaskBarIcon):
         """
         Create the right-click menu
         """
-        menu = self.tbIcon.CreatePopupMenu()
-        self.PopupMenu(menu)
-        menu.Destroy()
+        self.menu = self.CreatePopupMenu()
+        self.PopupMenu(self.menu)
+        self.menu.Destroy()
         
+    def OnShowFrame(self, evt):
+        """
+        Show Frame
+        """
+        self.frame.Show(True)
+        
+    def OnBatteryChange(self,evt):
+        """
+        change battery
+        """
+        print "Can't find icon file - using default." ,self.better.GetText(); 
+        self.better.SetText("60%")
+        self.better.SetItemLabel("60%")
+        print "Can't find icon file - using default." ,self.menu.FindItemById(self.id.SUBMENU_BETTER).GetText(); 
+        self.menu.SetLabel(self.id.SUBMENU_BETTER,"60%")
+        self.menu.UpdateUI()
 ########################################################################
 class MyForm(wx.Frame):
+    
  
     #----------------------------------------------------------------------
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, "Tutorial", size=(500,500))
-        panel = wx.Panel(self)
+        self.panel = wx.Panel(self)
         self.tbIcon = SystemTray(self)
+        device = Device()
+        self.tbIcon.addDevice(device)
         self.tbIcon.ShowBalloon("Test","Test",5,wx.ICON_WARNING);
         self.Bind(wx.EVT_CLOSE, self.onClose)
         
@@ -100,5 +129,5 @@ class MyForm(wx.Frame):
 # Run the program
 if __name__ == "__main__":
     app = wx.App(False)
-    frame = MyForm().Show()
+    frame = MyForm().Show(False)
     app.MainLoop()
