@@ -1,4 +1,6 @@
 import socket, sys
+from SystemTray import MyForm
+import wx
 
 class MiniServer:
     h = ''
@@ -63,3 +65,7 @@ if __name__ == "__main__":
         x.udpT4()
     else:
         x.udpT6()
+        
+    app = wx.App(False)
+    frame = MyForm().Show(False)
+    app.MainLoop()
