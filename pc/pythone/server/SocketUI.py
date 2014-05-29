@@ -4,6 +4,7 @@ import time
 import wx
 import socket
 
+
 #import sys
 import threading
 import struct
@@ -11,6 +12,7 @@ import struct
 #logging.basicConfig(level=logging.INFO, format='%(levelname)s - - %(asctime)s %(message)s', datefmt='[%d/%b/%Y %H:%M:%S]')
 
 #Receive message
+
 class Receiver(threading.Thread):
     def __init__(self,threadName,window):
         threading.Thread.__init__(self)
