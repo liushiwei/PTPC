@@ -25,6 +25,7 @@ class Receiver(threading.Thread):
             # Connect to server and send data
             self.window.LogMessage(u"IP: "+self.window.host+" port:"+str(self.window.port)+"...\n")
             self.sock.bind((self.window.host, self.window.port))
+            self.sock.settimeout(10)
             #self.window.LogMessage(u"连接服务器成功...\n")
             self.runT = True
         except Exception,data:
@@ -51,8 +52,10 @@ class Receiver(threading.Thread):
                     #dataLen, = struct.unpack_from("i",data)
                     #wx.CallAfter(self.window.LogMessage,(u"返回数据长度:%s\n" % (dataLen)))
                     wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
-        except Exception:
-            pass
+        except Exception,data:
+            print Exception,":",data
+            self.window.LogMessage(u"连接服务器失败...\n")
+            self.sock.close()
 class InsertFrame(wx.Frame):
 
     def __init__(self, parent, id):
