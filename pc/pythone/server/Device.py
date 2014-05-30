@@ -18,6 +18,7 @@ class Device():
     DeviceType = DEVICE_TYPE_ANDROID_PHONE
     Battery = 0
     UnReadMessages = 0
+    Mac = ''
     PhoneCall = 0
     Name = "Unknown"
     

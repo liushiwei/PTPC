@@ -7,21 +7,26 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.TextView;
 
 
 public class MainActivity extends Activity {
-
+	MyBatteryReceiver mbr = null;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_layout);
 		Button button = (Button) findViewById(R.id.button1);
+		mbr = new MyBatteryReceiver();
 		button.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -38,6 +43,9 @@ public class MainActivity extends Activity {
 				
 			}
 		});
+		
+		IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);	//还有3个Action说说得
+		registerReceiver(mbr, filter);		
 	}
 	
 	public static void send(String message) {  
@@ -67,5 +75,17 @@ public class MainActivity extends Activity {
             e.printStackTrace();  
         }  
     } 
+	
+	private class MyBatteryReceiver extends BroadcastReceiver{
+		@Override
+		public void onReceive(Context context, Intent intent) {		//重写onReceiver方法
+			int current = intent.getExtras().getInt("level");		//获得当前电量
+			int total = intent.getExtras().getInt("scale");			//获得总电量
+			int percent = current*100/total;		//计算百分比
+			TextView tv = (TextView)findViewById(R.id.battery);			//获得TextView对象
+			tv.setText("现在的电量是："+percent+"%。");				//设置TextView显示的内容
+			Log.e("MyBatteryReceiver", "现在的电量是："+percent+"%。");
+		}
+    }
 
 }

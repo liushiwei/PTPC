@@ -3,8 +3,9 @@
 import time
 import wx
 import socket
-
-
+from jsonParse import JsonParse
+from SystemTray import SystemTray
+from Device import Device
 #import sys
 import threading
 import struct
@@ -13,6 +14,8 @@ import struct
 
 #Receive message
 
+PORT = 1224
+
 class Receiver(threading.Thread):
     def __init__(self,threadName,window):
         threading.Thread.__init__(self)
@@ -20,20 +23,26 @@ class Receiver(threading.Thread):
         self.window = window
         self.timeToQuit = threading.Event()
         self.timeToQuit.clear()
+        self.host = ''
         #连接服务器
         # Create a socket (SOCK_STREAM means a TCP socket)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            # Connect to server and send data
-            self.window.LogMessage(u"IP: "+self.window.host+" port:"+str(self.window.port)+"...\n")
-            self.sock.bind((self.window.host, self.window.port))
-            self.sock.settimeout(10)
-            #self.window.LogMessage(u"连接服务器成功...\n")
-            self.runT = True
-        except Exception,data:
-            print Exception,":",data
-            self.window.LogMessage(u"连接服务器失败...\n")
-            self.sock.close()
+#        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         ipList = socket.gethostbyname_ex(socket.gethostname())
+#         ips = ipList[2]
+#         for i in ips:
+#             print "external IP:%s"%i
+#             
+#         try:
+#             # Connect to server and send data
+#             self.window.LogMessage(u"IP: "+self.host+" port:"+str(PORT)+"...\n")
+#             self.sock.bind((self.host, PORT))
+#             self.sock.settimeout(10)
+#             #self.window.LogMessage(u"连接服务器成功...\n")
+#             self.runT = True
+#         except Exception,data:
+#             print Exception,":",data
+#             self.window.LogMessage(u"连接服务器失败...\n")
+#             self.sock.close()
 
     def stop(self):
         self.window.LogMessage(u"关闭Socket连接...\n")
@@ -47,12 +56,38 @@ class Receiver(threading.Thread):
         self.sock.sendall(msg)
 
     def run(self):
+        self.runT = True
+        while self.runT:
+            ipList = socket.gethostbyname_ex(socket.gethostname())
+            ips = ipList[2]
+            for i in ips:
+                print "external IP:%s"%i
+                try:
+                    # Connect to server and send data
+                    self.window.LogMessage(u"IP: "+i+" port:"+str(PORT)+"...\n")
+                    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    self.sock.bind((i, PORT))
+                    self.sock.settimeout(2)
+                    udpT4Data, udpT4ServerInfo = self.sock.recvfrom(1024)
+                    if udpT4Data:
+                        self.host = i
+                        break;
+                except Exception,data:
+                    print Exception,":",data
+                    self.window.LogMessage(u"连接服务器失败...\n")
+                    self.sock.close()
+            if self.host:
+                self.sock.settimeout(10)
+                self.window.systemTray.ShowBalloon("Connecting Success","^_^",2,wx.ICON_WARNING);
+                break;
         try:
             while self.runT:
                 udpT4Data, udpT4ServerInfo = self.sock.recvfrom(1024)
                 if udpT4Data:
                     #dataLen, = struct.unpack_from("i",data)
                     #wx.CallAfter(self.window.LogMessage,(u"返回数据长度:%s\n" % (dataLen)))
+                    device = JsonParse.parseDevice(udpT4Data)
+                    self.window.systemTray.addDevice(device)
                     wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
         except Exception,data:
             print Exception,":",data
@@ -77,6 +112,13 @@ class InsertFrame(wx.Frame):
         #Socket 地址
         self.host, self.port = "localhost", 12340
         self.runT = True
+        
+        #创建系统托盘
+        self.systemTray = SystemTray(self)
+        device = Device()
+        self.systemTray.addDevice(device)
+        self.systemTray.ShowBalloon("Connecting","...",10,wx.ICON_WARNING);
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
 ###############################
     #创建文本
     def createTextFields(self, panel):
@@ -122,7 +164,10 @@ class InsertFrame(wx.Frame):
 
     #事件处理器(关闭窗口）
     def OnCloseWindow(self, event):
-        self.thread.stop()
+        self.systemTray.RemoveIcon()
+        self.systemTray.Destroy()
+        if 'thread' in locals().keys():
+            self.thread.stop()
         self.Destroy()
 
     #事件处理器(关闭Socket）
@@ -151,10 +196,6 @@ class InsertFrame(wx.Frame):
         self.thread.sendMsg(self.inputMessage.GetValue())
         self.inputMessage.Clear()
 
-import uuid
-def get_mac_address(): 
-    mac=uuid.UUID(int = uuid.getnode()).hex[-12:] 
-    return ":".join([mac[e:e+2] for e in range(0,11,2)])
 
 if __name__ == '__main__':
     app = wx.PySimpleApp()
@@ -166,4 +207,3 @@ if __name__ == '__main__':
     ipList = socket.gethostbyname_ex(socket.gethostname())
     for i in ipList:
         print "external IP:%s"%i
-    print get_mac_address()
