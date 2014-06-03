@@ -43,6 +43,7 @@ class SystemTray(wx.TaskBarIcon):
         the menu how you want it and return it from this function,
         the base class takes care of the rest.
         """
+        print("CreatePopupMenu ",self.devices)
         menu = wx.Menu()
         menu.Append(self.id.TBMENU_RESTORE, "Open Program")
         menu.Append(self.id.TBMENU_CHANGE, "Show all the Items")
@@ -59,8 +60,17 @@ class SystemTray(wx.TaskBarIcon):
         return menu
         
     def addDevice(self,device):
-        self.devices.append(device)
-        return
+        print("addDevice ",device)
+        if len(self.devices)==0:
+            self.devices.append(device)
+            return
+        for dev in self.devices:
+            if device.Mac == dev.Mac:
+                print("device mac equse ",dev.Mac)
+                dev = device
+            else:
+                print("device append ",device)
+                self.devices.append(device)
     #----------------------------------------------------------------------
     def OnTaskBarActivate(self, evt):
         """"""

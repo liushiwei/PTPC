@@ -86,8 +86,18 @@ class Receiver(threading.Thread):
                 if udpT4Data:
                     #dataLen, = struct.unpack_from("i",data)
                     #wx.CallAfter(self.window.LogMessage,(u"返回数据长度:%s\n" % (dataLen)))
-                    device = JsonParse.parseDevice(udpT4Data)
-                    self.window.systemTray.addDevice(device)
+                    
+                    device_t = JsonParse.parseDevice(udpT4Data)
+                    print "device mac:%s"%device_t.Mac
+                    self.window.systemTray.addDevice(device_t)
+#                     if self.device:
+#                         if self.device.Mac == device_t.Mac:
+#                             self.device = device_t
+#                         else :
+#                             self.window.systemTray.addDevice(device_t)
+#                     else :
+#                         self.device = device_t
+
                     wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
         except Exception,data:
             print Exception,":",data
@@ -116,7 +126,7 @@ class InsertFrame(wx.Frame):
         #创建系统托盘
         self.systemTray = SystemTray(self)
         device = Device()
-        self.systemTray.addDevice(device)
+        #self.systemTray.addDevice(device)
         self.systemTray.ShowBalloon("Connecting","...",10,wx.ICON_WARNING);
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
 ###############################
