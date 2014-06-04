@@ -101,6 +101,7 @@ class Receiver(threading.Thread):
                     wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
         except Exception,data:
             print Exception,":",data
+            self.window.systemTray.ShowBalloon("Connection is disconnected","*o*",2,wx.ICON_WARNING);
             self.window.LogMessage(u"连接服务器失败...\n")
             self.sock.close()
 class InsertFrame(wx.Frame):
