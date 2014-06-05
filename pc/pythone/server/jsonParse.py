@@ -16,3 +16,13 @@ class JsonParse:
         device.PhoneCall = decoded['device']['PhoneCall']
         device.Mac = decoded['device']['Mac']
         return device
+    
+    @staticmethod
+    def parseCmd(jsonData):
+        decoded = json.loads(jsonData)
+        return decoded['cmd']
+    
+    @staticmethod
+    def getMissedCall(jsonData):
+        decoded = json.loads(jsonData)
+        return decoded['phone_number']

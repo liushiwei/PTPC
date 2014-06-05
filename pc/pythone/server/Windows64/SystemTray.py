@@ -48,7 +48,7 @@ class SystemTray(wx.TaskBarIcon):
         menu.Append(self.id.TBMENU_RESTORE, "Open Program")
         menu.Append(self.id.TBMENU_CHANGE, "Show all the Items")
         for device in self.devices:
-            print("device better",device.Name)
+            print("device :",device.Name,device.Battery,device.UnReadMessages,device.PhoneCall)
             sub_menu = wx.Menu()
             sub_menu.Append(self.id.SUBMENU_BATTER,"Battery: "+str(device.Battery)+"%")
             #sub_menu.Append(self.id.SUBMENU_CHANGE_ICON,"Change Icon")
@@ -64,13 +64,15 @@ class SystemTray(wx.TaskBarIcon):
         if len(self.devices)==0:
             self.devices.append(device)
             return
-        for dev in self.devices:
-            if device.Mac == dev.Mac:
-                print("device mac equse ",dev.Mac)
-                dev = device
-            else:
-                print("device append ",device)
-                self.devices.append(device)
+        
+        for i in range(len(self.devices)):
+            if device.Mac == self.devices[i].Mac:
+                print("device mac equse ",self.devices[i].Mac)
+                self.devices[i] = device
+                print("device mac equse ",self.devices[i].Mac,self.devices[i].UnReadMessages,self.devices[i].PhoneCall)
+        if i== len(self.devices):
+            print("device append ",device)
+            self.devices.append(device)
     #----------------------------------------------------------------------
     def OnTaskBarActivate(self, evt):
         """"""

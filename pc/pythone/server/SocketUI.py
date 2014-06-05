@@ -6,6 +6,7 @@ import socket
 from jsonParse import JsonParse
 from SystemTray import SystemTray
 from Device import Device
+from Commands import Commands
 #import sys
 import threading
 import struct
@@ -58,52 +59,60 @@ class Receiver(threading.Thread):
     def run(self):
         self.runT = True
         while self.runT:
-            ipList = socket.gethostbyname_ex(socket.gethostname())
-            ips = ipList[2]
-            for i in ips:
-                print "external IP:%s"%i
-                try:
-                    # Connect to server and send data
-                    self.window.LogMessage(u"IP: "+i+" port:"+str(PORT)+"...\n")
-                    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    self.sock.bind((i, PORT))
-                    self.sock.settimeout(2)
+            while self.runT:
+                ipList = socket.gethostbyname_ex(socket.gethostname())
+                ips = ipList[2]
+                for i in ips:
+                    print "external IP:%s"%i
+                    try:
+                        # Connect to server and send data
+                        self.window.LogMessage(u"IP: "+i+" port:"+str(PORT)+"...\n")
+                        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        self.sock.bind((i, PORT))
+                        self.sock.settimeout(2)
+                        udpT4Data, udpT4ServerInfo = self.sock.recvfrom(1024)
+                        if udpT4Data:
+                            self.host = i
+                            break;
+                    except Exception,data:
+                        print Exception,":",data
+                        self.window.LogMessage(u"连接服务器失败...\n")
+                        self.sock.close()
+                if self.host:
+                    self.sock.settimeout(30)
+                    self.window.systemTray.ShowBalloon("Connecting Success","^_^",2,wx.ICON_WARNING);
+                    break;
+            try:
+                while self.runT:
                     udpT4Data, udpT4ServerInfo = self.sock.recvfrom(1024)
                     if udpT4Data:
-                        self.host = i
-                        break;
-                except Exception,data:
-                    print Exception,":",data
-                    self.window.LogMessage(u"连接服务器失败...\n")
-                    self.sock.close()
-            if self.host:
-                self.sock.settimeout(10)
-                self.window.systemTray.ShowBalloon("Connecting Success","^_^",2,wx.ICON_WARNING);
-                break;
-        try:
-            while self.runT:
-                udpT4Data, udpT4ServerInfo = self.sock.recvfrom(1024)
-                if udpT4Data:
-                    #dataLen, = struct.unpack_from("i",data)
-                    #wx.CallAfter(self.window.LogMessage,(u"返回数据长度:%s\n" % (dataLen)))
-                    
-                    device_t = JsonParse.parseDevice(udpT4Data)
-                    print "device mac:%s"%device_t.Mac
-                    self.window.systemTray.addDevice(device_t)
-#                     if self.device:
-#                         if self.device.Mac == device_t.Mac:
-#                             self.device = device_t
-#                         else :
-#                             self.window.systemTray.addDevice(device_t)
-#                     else :
-#                         self.device = device_t
-
-                    wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
-        except Exception,data:
-            print Exception,":",data
-            self.window.systemTray.ShowBalloon("Connection is disconnected","*o*",2,wx.ICON_WARNING);
-            self.window.LogMessage(u"连接服务器失败...\n")
-            self.sock.close()
+                        #dataLen, = struct.unpack_from("i",data)
+                        #wx.CallAfter(self.window.LogMessage,(u"返回数据长度:%s\n" % (dataLen)))
+                        cmd = JsonParse.parseCmd(udpT4Data)
+                        if cmd ==  Commands.CMD_PTD_PHSTATUS:
+                            device_t = JsonParse.parseDevice(udpT4Data)
+                            print "device mac:%s"%device_t.Mac
+                            self.window.systemTray.addDevice(device_t)
+        #                     if self.device:
+        #                         if self.device.Mac == device_t.Mac:
+        #                             self.device = device_t
+        #                         else :
+        #                             self.window.systemTray.addDevice(device_t)
+        #                     else :
+        #                         self.device = device_t
+        
+                            wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
+                        elif cmd ==  Commands.CMD_PTD_MISSEDCALL:
+                            wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
+                            self.window.systemTray.ShowBalloon("Missed Call",JsonParse.getMissedCall(udpT4Data),2,wx.ICON_WARNING)
+                        elif cmd ==  Commands.CMD_PTD_MISSEDMMS:
+                            wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
+                            self.window.systemTray.ShowBalloon("Missed MMS","*o*",2,wx.ICON_WARNING);
+            except Exception,data:
+                print Exception,":",data
+                #self.window.systemTray.ShowBalloon("Connection is disconnected","*o*",2,wx.ICON_WARNING);
+                self.window.LogMessage(u"连接服务器失败...\n")
+                self.sock.close()
 class InsertFrame(wx.Frame):
 
     def __init__(self, parent, id):
