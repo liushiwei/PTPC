@@ -23,6 +23,7 @@ class JsonParse:
         return decoded['cmd']
     
     @staticmethod
-    def getMissedCall(jsonData):
+    def getPhoneNumber(jsonData):
         decoded = json.loads(jsonData)
         return decoded['phone_number']
+    

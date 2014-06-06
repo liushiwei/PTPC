@@ -45,7 +45,7 @@ public class PTPCService extends Service {
 			Gson gson = new Gson();
 			Map<String, Object> map = new HashMap<String, Object>();
 			switch (msg.what) {
-			case 0:
+			case Commands.CMD_PTD_PHSTATUS:
 				Device device = new Device();
 				device.setMac(mac);
 				device.setBattery(percent);
@@ -54,14 +54,23 @@ public class PTPCService extends Service {
 				map.put("cmd", Commands.CMD_PTD_PHSTATUS);
 				map.put("device", device);
 				send(gson.toJson(map));
-				mHandler.sendEmptyMessageDelayed(0, 5000);
+				mHandler.sendEmptyMessageDelayed(Commands.CMD_PTD_PHSTATUS, 5000);
 				break;
 				
-			case 1:
+			case Commands.CMD_PTD_MISSEDCALL:
 				map.put("cmd", Commands.CMD_PTD_MISSEDCALL);
 				map.put("phone_number", msg.obj);
 				send(gson.toJson(map));
-				mHandler.sendEmptyMessageDelayed(0, 5000);
+				break;
+			case Commands.CMD_PTD_CALLIN:
+				map.put("cmd", Commands.CMD_PTD_CALLIN);
+				map.put("phone_number", msg.obj);
+				send(gson.toJson(map));
+				break;
+			case Commands.CMD_PTD_OFFHOOK:
+				map.put("cmd", Commands.CMD_PTD_OFFHOOK);
+				map.put("phone_number", msg.obj);
+				send(gson.toJson(map));
 				break;
 
 			default:
@@ -95,7 +104,7 @@ public class PTPCService extends Service {
 			}
 		}, missed_call_filter);
 		registerObserver();
-		mHandler.sendEmptyMessage(0);
+		mHandler.sendEmptyMessage(Commands.CMD_PTD_PHSTATUS);
 
 		WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		WifiInfo info = manager.getConnectionInfo();
@@ -123,7 +132,7 @@ public class PTPCService extends Service {
 				// result+=" 手机空闲起来了  ";
 				if(phoneState==TelephonyManager.CALL_STATE_RINGING){
 					Log.e("Service", "有未接电话  ");
-					mHandler.obtainMessage(1, phoneNumber).sendToTarget();
+					mHandler.obtainMessage(Commands.CMD_PTD_MISSEDCALL, phoneNumber).sendToTarget();
 				}
 				Log.e("Service", "手机空闲起来了  ");
 				phoneState = TelephonyManager.CALL_STATE_IDLE;
@@ -133,11 +142,13 @@ public class PTPCService extends Service {
 				Log.e("Service", "  手机铃声响了，来电号码:" + incomingNumber);
 				phoneNumber = incomingNumber;
 				phoneState = TelephonyManager.CALL_STATE_RINGING;
+				mHandler.obtainMessage(Commands.CMD_PTD_CALLIN, phoneNumber).sendToTarget();
 				break;
 			case TelephonyManager.CALL_STATE_OFFHOOK:
 				// result+=" 电话被挂起了 ";
 				Log.e("Service", "电话被挂起了");
 				phoneState = TelephonyManager.CALL_STATE_OFFHOOK;
+				mHandler.obtainMessage(Commands.CMD_PTD_OFFHOOK, phoneNumber).sendToTarget();
 			default:
 				break;
 			}

@@ -51,10 +51,11 @@ class Receiver(threading.Thread):
         self.runT = False
         self.timeToQuit.set()
 
-    def sendMsg(self,msg):
+    def sendMsg(self,adr,msg):
         logMsg = (u"发送：%s\n" % (msg))
         self.window.LogMessage(logMsg)
-        self.sock.sendall(msg)
+        address = (adr,PORT)
+        self.sock.sendto(msg,address)
 
     def run(self):
         self.runT = True
@@ -85,6 +86,7 @@ class Receiver(threading.Thread):
             try:
                 while self.runT:
                     udpT4Data, udpT4ServerInfo = self.sock.recvfrom(1024)
+                    print "Receive from ", udpT4ServerInfo, " and The Data send from The Client is :", udpT4Data
                     if udpT4Data:
                         #dataLen, = struct.unpack_from("i",data)
                         #wx.CallAfter(self.window.LogMessage,(u"返回数据长度:%s\n" % (dataLen)))
@@ -101,18 +103,37 @@ class Receiver(threading.Thread):
         #                     else :
         #                         self.device = device_t
         
-                            wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
+                            wx.CallAfter(self.window.LogMessage,(u"返回数据:%s \n" % udpT4Data))
                         elif cmd ==  Commands.CMD_PTD_MISSEDCALL:
                             wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
-                            self.window.systemTray.ShowBalloon("Missed Call",JsonParse.getMissedCall(udpT4Data),2,wx.ICON_WARNING)
+                            self.window.systemTray.ShowBalloon("Missed Call",JsonParse.getPhoneNumber(udpT4Data),2,wx.ICON_WARNING)
                         elif cmd ==  Commands.CMD_PTD_MISSEDMMS:
                             wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
                             self.window.systemTray.ShowBalloon("Missed MMS","*o*",2,wx.ICON_WARNING);
+                        elif cmd ==  Commands.CMD_PTD_CALLIN:
+                            wx.CallAfter(self.window.LogMessage,(u"返回数据:%s\n" % udpT4Data))
+                            dialog = MyDialog(JsonParse.getPhoneNumber(udpT4Data))
+                            r = dialog.ShowModal()                                                             #获取返回值
+                            if r == wx.ID_OK:
+                                wx.CallAfter(self.window.LogMessage,(u"接听电话:%s\n" % JsonParse.getPhoneNumber(udpT4Data)))
+                                
+                            if r == wx.ID_CANCEL:
+                                wx.CallAfter(self.window.LogMessage,(u"挂断电话:%s\n" % JsonParse.getPhoneNumber(udpT4Data)))
+                            dialog.Destroy()                                                                        #销毁对话框
             except Exception,data:
                 print Exception,":",data
                 #self.window.systemTray.ShowBalloon("Connection is disconnected","*o*",2,wx.ICON_WARNING);
                 self.window.LogMessage(u"连接服务器失败...\n")
                 self.sock.close()
+
+class MyDialog(wx.Dialog):                  #定义对话框类
+    def __init__(self,phoneNumber):
+        wx.Dialog.__init__(self, None, -1, 'Call In', size=(300,130))      #调用父类初始化方法
+        label = wx.StaticText(self, -1, 'Phone Number:'+phoneNumber, pos=(20,20))     #生成标签
+        self.ok = wx.Button(self, wx.ID_OK, "Answer", pos=(50,80))
+        self.cancel = wx.Button(self, wx.ID_CANCEL, "Hang up", pos=(200,80))
+
+
 class InsertFrame(wx.Frame):
 
     def __init__(self, parent, id):
